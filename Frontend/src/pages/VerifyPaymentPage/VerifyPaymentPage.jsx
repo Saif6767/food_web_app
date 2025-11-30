@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState, } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useCart } from '../../CartContext/CartContext'
 import axios from 'axios';
@@ -10,14 +10,14 @@ const VerifyPaymentPage = () => {
   const navigate = useNavigate();
   const [statusMsg, setStatusMsg] = useState('Verifying Payment, Please wait...');
 
-  // token
-  const token = localStorage.getItem('authToken');
-  const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
-
   useEffect(() => {
     const params = new URLSearchParams(search);
     const success = params.get('success');
     const session_id = params.get('session_id');
+
+    // token inside effect to avoid stale/unstable deps
+    const token = localStorage.getItem('authToken');
+    const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
 
     // Missing or concelled payment
     if (success !== 'true' && session_id) {
@@ -41,9 +41,10 @@ const VerifyPaymentPage = () => {
       .catch((err) => {
         console.error('Error confirming order:', err);
         setStatusMsg('There was an error confirming your order. Please contact support.');
-        clearCart(false);
+        // attempt to clear cart (no args expected)
+        try { clearCart(); } catch (e) { /* ignore */ }
       })
-  }, [search, clearCart, authHeaders, navigate]);
+  }, [search, clearCart, navigate]);
 
 
   return (

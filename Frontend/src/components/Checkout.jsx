@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { data, Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { FaArrowLeft, FaLock } from 'react-icons/fa'
 import { useCart } from '../CartContext/CartContext'
 import axios from 'axios'
@@ -65,8 +65,10 @@ const Checkout = () => {
     const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
 
     // Payment Methods (URL checking)
+    const { search } = useLocation();
+
     useEffect(() => {
-        const params = new URLSearchParams(location.search);
+        const params = new URLSearchParams(search);
         const paymentStatus = params.get('payment_status');
         const sessionId = params.get('session_id');
 
@@ -74,12 +76,14 @@ const Checkout = () => {
             setLoading(true);
 
             if (paymentStatus === 'success' && sessionId) {
-                axios.post('http://localhost:4000/api/orders/confirm',
-                    { sessionId },
-                    { headers: authHeaders })
+                // backend expects GET /confirm with query param session_id
+                axios.get('http://localhost:4000/api/orders/confirm', {
+                    params: { session_id: sessionId },
+                    headers: authHeaders
+                })
                     .then(({ data }) => {
                         clearCart();
-                        navigate('/myorder', { state: { order: data.order } });
+                        navigate('/myorder', { state: { order: data } });
                     })
                     .catch(err => {
                         console.error('Error confirming order:', err);
@@ -91,7 +95,7 @@ const Checkout = () => {
                 setLoading(false);
             }
         }
-    }, [location.search, clearCart, navigate, authHeaders]);
+    }, [search, clearCart, navigate, authHeaders]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
