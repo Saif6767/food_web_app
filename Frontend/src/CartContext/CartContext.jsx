@@ -64,7 +64,7 @@ export const CartProvider = ({ children }) => {
         })
             .then(res => dispatch({ type: 'HYDRATE_CART', payload: res.data }))
             .catch(err => { if (err.response?.status !== 401) console.error(err) });
-    })
+    },[])
 
     // Dispatcher 
     const addToCart = useCallback(async (item, qty) => {
